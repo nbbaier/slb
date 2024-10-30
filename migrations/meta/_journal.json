@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1730267909442,
+      "tag": "20241030055829_clumsy_risque",
+      "breakpoints": true
+    }
+  ]
+}

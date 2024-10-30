@@ -1,0 +1,24 @@
+{
+  "name": "slb",
+  "module": "src/index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "drizzle-kit": "^0.26.2"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.14.0",
+    "@types/jsdom": "^21.1.7",
+    "drizzle-orm": "^0.35.2",
+    "jsdom": "^25.0.1"
+  },
+  "scripts": {
+    "generate": "bun drizzle-kit generate",
+    "migrate": "bun drizzle-kit migrate",
+    "gm": "bun generate && bun migrate",
+    "insert:authors": "bun src/db/procedures/createAllAuthors.ts"
+  }
+}
