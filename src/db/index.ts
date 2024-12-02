@@ -2,7 +2,7 @@ import { drizzle } from "drizzle-orm/libsql";
 import { DB_PATH } from "../../config";
 import * as schema from "./schema";
 
-export const db = drizzle({
+export default drizzle({
 	connection: {
 		url: `file:${DB_PATH}`,
 	},

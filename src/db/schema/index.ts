@@ -155,7 +155,7 @@ export type DatabaseTable =
 	| AuthorsToPapersTable
 	| KeywordsToPapersTable;
 
-export const authorsRelations = relations(authors, ({ many }) => ({
+export const authorsRelations = relations(authors, ({ one, many }) => ({
 	authorsToPapers: many(authorsToPapers),
 }));
 
@@ -175,6 +175,7 @@ export const authorsToPapersRelations = relations(
 			fields: [authorsToPapers.authorId],
 			references: [authors.authorId],
 		}),
+
 		paper: one(papers, {
 			fields: [authorsToPapers.paperId],
 			references: [papers.paperId],
