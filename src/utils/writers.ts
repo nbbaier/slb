@@ -1,5 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import type { ExtendedAuthor, ExtendedPaper } from "../types";
+
 async function writeToFile(file: string, data: string) {
 	if (process.versions.bun) {
 		await Bun.write(file, data);
