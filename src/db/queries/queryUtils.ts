@@ -1,5 +1,5 @@
 import { getTableColumns } from "drizzle-orm";
-import type { DatabaseTable, DataTimeTable } from "../schema";
+import type { DatabaseTable } from "../schema";
 
 export function removeTimeColumns<T extends DatabaseTable>(table: T) {
 	const columns = getTableColumns(table);

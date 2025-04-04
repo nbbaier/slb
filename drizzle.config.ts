@@ -1,5 +1,5 @@
 import { defineConfig } from "drizzle-kit";
-import { DB_PATH } from "./config";
+import { DB_PATH } from "./src/config";
 
 export default defineConfig({
 	dialect: "turso",

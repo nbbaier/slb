@@ -1,5 +1,5 @@
 import { appendFile } from "node:fs/promises";
-import { db } from "..";
+import db from "..";
 import type { ScrapedPaperData } from "../../types";
 import { getScrapedDirInfo, getScrapedDirsContents } from "../../utils/common";
 import {

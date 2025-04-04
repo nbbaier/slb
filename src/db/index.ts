@@ -1,5 +1,5 @@
 import { drizzle } from "drizzle-orm/libsql";
-import { DB_PATH } from "../../config";
+import { DB_PATH } from "../config";
 import * as schema from "./schema";
 
 export default drizzle({

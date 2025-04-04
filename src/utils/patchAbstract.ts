@@ -1,13 +1,13 @@
 import { JSDOM } from "jsdom";
 import type { ExtendedPaper, ScrapedPaperData } from "../types";
-import { getScrapedPaperDirInfo, getScrapedPaperDirsContents } from "./common";
+import { getScrapedDirInfo, getScrapedDirsContents } from "./common";
 import { getNodesBetween } from "./extractors";
 import { parseAbstract } from "./parsers";
 
 async function main() {
 	const baseDir = "./scraped_data/papers";
-	const contents = await getScrapedPaperDirsContents(baseDir);
-	const dirs = await getScrapedPaperDirInfo(baseDir, contents);
+	const contents = await getScrapedDirsContents(baseDir, "");
+	const dirs = await getScrapedDirInfo(baseDir, "", contents);
 
 	const limit = Bun.argv[2] ? Number(Bun.argv[2]) : dirs.length;
 

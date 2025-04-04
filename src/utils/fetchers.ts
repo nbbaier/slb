@@ -1,14 +1,9 @@
 import { JSDOM } from "jsdom";
-import {
-	parseAbstract,
-	parseCenterElement,
-	parseTable,
-	parseTableNew,
-} from "./parsers";
+import { BASE_URL } from "../config";
 import { FetchError, type PreviousVersion } from "../types";
-import { isPaperFound, splitKeywords } from "./common";
-import { getNodesBetween, stripParams } from "./extractors";
-import { BASE_URL } from "../../config";
+import { isPaperFound, splitKeywords, stripParams } from "./common";
+import { getNodesBetween } from "./extractors";
+import { parseAbstract, parseCenterElement, parseTableNew } from "./parsers";
 
 export async function fetchHtml(url: string): Promise<string> {
 	try {

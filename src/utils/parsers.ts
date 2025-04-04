@@ -1,7 +1,7 @@
 import { JSDOM } from "jsdom";
-import { BASE_URL } from "../../config";
+import { BASE_URL } from "../config";
 import type { PreviousVersion } from "../types";
-import { stripParams } from "./extractors";
+import { stripParams } from "./common";
 
 export function parseCenterElement(document: Document): string[] {
 	const centerElement = document.querySelector("body > center");

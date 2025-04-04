@@ -1,5 +1,5 @@
-import { relations, sql } from "drizzle-orm";
-import { primaryKey, sqliteTable, index } from "drizzle-orm/sqlite-core";
+import { relations } from "drizzle-orm";
+import { sqliteTable } from "drizzle-orm/sqlite-core";
 
 export const authors = sqliteTable("authors", (t) => ({
 	authorId: t.integer().primaryKey(),

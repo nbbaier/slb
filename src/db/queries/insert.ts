@@ -1,6 +1,6 @@
 import type { ResultSet } from "@libsql/client";
 import type { IndexColumn, SQLiteColumn } from "drizzle-orm/sqlite-core";
-import db from "../index";
+import db from "..";
 import {
 	authors,
 	authorsToPapers,

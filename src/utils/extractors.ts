@@ -1,13 +1,9 @@
 import { JSDOM } from "jsdom";
-import { BASE_URL } from "../../config";
+import { BASE_URL } from "../config";
 import type { BasePaper, BaseAuthor } from "../types";
 import { fetchHtml } from "./fetchers";
-
-export function stripParams(url: string): string {
-	const strippedURL = new URL(url);
-	strippedURL.search = "";
-	return strippedURL.toString();
-}
+import { stripParams } from "./common";
+stripParams;
 
 export const extractDataFromRow = (
 	row: HTMLTableRowElement,

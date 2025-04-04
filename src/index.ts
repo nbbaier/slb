@@ -1,5 +1,5 @@
 import { exists } from "node:fs/promises";
-import { BASE_URL } from "../config";
+import { BASE_URL } from "./config";
 import type { ExtendedAuthor, ExtendedPaper } from "./types";
 import { writeAuthorData, writePaperData } from "./utils/writers";
 import { fetchAuthorData, fetchPaperData } from "./utils/fetchers";

@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { db } from "..";
+import db from "..";
 import {
 	type authors,
 	authorsToPapers,

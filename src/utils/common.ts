@@ -1,9 +1,15 @@
-import { readdir } from "node:fs/promises";
 import type { Dirent } from "node:fs";
-import { JSDOM } from "jsdom";
+import { readdir } from "node:fs/promises";
 import { join } from "node:path/posix";
+import { JSDOM } from "jsdom";
+import { BASE_URL } from "../config";
 import { fetchHtml } from "./fetchers";
-import { BASE_URL } from "../../config";
+
+export function stripParams(url: string): string {
+	const strippedURL = new URL(url);
+	strippedURL.search = "";
+	return strippedURL.toString();
+}
 
 export async function getPaperCount(BASE_URL: string): Promise<number> {
 	const html = await fetchHtml(BASE_URL);
