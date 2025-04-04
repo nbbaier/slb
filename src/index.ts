@@ -1,11 +1,11 @@
 import { exists } from "node:fs/promises";
 import { BASE_URL } from "./config";
 import type { ExtendedAuthor, ExtendedPaper } from "./types";
-import { writeAuthorData, writePaperData } from "./utils/writers";
-import { fetchAuthorData, fetchPaperData } from "./utils/fetchers";
-import { extractDataFromRow } from "./utils/extractors";
 import { generateUrls, getPageRows } from "./utils/common";
 import { chunkArray } from "./utils/common";
+import { extractDataFromRow } from "./utils/extractors";
+import { fetchAuthorData, fetchPaperData } from "./utils/fetchers";
+import { writeAuthorData, writePaperData } from "./utils/writers";
 
 async function main() {
 	const urlsToScrape = await generateUrls(BASE_URL);

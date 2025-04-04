@@ -1,5 +1,6 @@
-import { relations, sql } from "drizzle-orm";
-import { primaryKey, sqliteTable, index } from "drizzle-orm/sqlite-core";
+import { relations } from "drizzle-orm";
+import { index, primaryKey, sqliteTable } from "drizzle-orm/sqlite-core";
+import { recordTimestampColumns, rowTimestampColumns } from "./sharedCols";
 
 export const authors = sqliteTable(
 	"authors",
@@ -11,23 +12,13 @@ export const authors = sqliteTable(
 		email: t.text().notNull(),
 		website: t.text(),
 		affiliation: t.text(),
-		dataCreatedAt: t.integer({ mode: "timestamp" }).notNull(),
-		dataUpdatedAt: t.integer({ mode: "timestamp" }).notNull(),
-		rowCreatedAt: t
-			.integer({ mode: "timestamp" })
-			.notNull()
-			.default(sql`(unixepoch())`),
-		rowUpdatedAt: t
-			.integer({ mode: "timestamp" })
-			.notNull()
-			.default(sql`(unixepoch())`),
+		...recordTimestampColumns(t),
+		...rowTimestampColumns(t),
 	}),
-	(t) => {
-		return {
-			authorsNamesIdx: index("authors_names").on(t.lastName, t.firstName),
-			authorsEmailIdx: index("authors_email").on(t.email),
-		};
-	},
+	(t) => [
+		index("authors_names").on(t.lastName, t.firstName),
+		index("authors_email").on(t.email),
+	],
 );
 
 export const papers = sqliteTable(
@@ -45,37 +36,20 @@ export const papers = sqliteTable(
 		downloads: t.integer(),
 		downloadUrl: t.text(),
 		paperUrl: t.text(),
-		dataCreatedAt: t.integer({ mode: "timestamp" }).notNull(),
-		dataUpdatedAt: t.integer({ mode: "timestamp" }).notNull(),
-		rowCreatedAt: t
-			.integer({ mode: "timestamp" })
-			.notNull()
-			.default(sql`(unixepoch())`),
-		rowUpdatedAt: t
-			.integer({ mode: "timestamp" })
-			.notNull()
-			.default(sql`(unixepoch())`),
+		...recordTimestampColumns(t),
+		...rowTimestampColumns(t),
 	}),
-	(t) => {
-		return {
-			papersYearIdx: index("papers_year").on(t.paperYear),
-			papersMonthIdx: index("papers_month").on(t.paperMonth),
-			papersDateIdx: index("papers_date").on(t.paperYear, t.paperMonth),
-		};
-	},
+	(t) => [
+		index("papers_year").on(t.paperYear),
+		index("papers_month").on(t.paperMonth),
+		index("papers_date").on(t.paperYear, t.paperMonth),
+	],
 );
 
 export const keywords = sqliteTable("keywords", (t) => ({
 	keywordId: t.integer().primaryKey(),
 	keyword: t.text().unique().notNull(),
-	rowCreatedAt: t
-		.integer({ mode: "timestamp" })
-		.notNull()
-		.default(sql`(unixepoch())`),
-	rowUpdatedAt: t
-		.integer({ mode: "timestamp" })
-		.notNull()
-		.default(sql`(unixepoch())`),
+	...rowTimestampColumns(t),
 }));
 
 export const authorsToPapers = sqliteTable(
@@ -96,18 +70,9 @@ export const authorsToPapers = sqliteTable(
 				onUpdate: "cascade",
 			}),
 		authorPosition: t.integer().notNull(),
-		rowCreatedAt: t
-			.integer({ mode: "timestamp" })
-			.notNull()
-			.default(sql`(unixepoch())`),
-		rowUpdatedAt: t
-			.integer({ mode: "timestamp" })
-			.notNull()
-			.default(sql`(unixepoch())`),
+		...rowTimestampColumns(t),
 	}),
-	(t) => ({
-		pk: primaryKey({ columns: [t.authorId, t.paperId] }),
-	}),
+	(t) => [primaryKey({ columns: [t.authorId, t.paperId] })],
 );
 
 export const keywordsToPapers = sqliteTable(
@@ -127,18 +92,9 @@ export const keywordsToPapers = sqliteTable(
 				onDelete: "cascade",
 				onUpdate: "cascade",
 			}),
-		rowCreatedAt: t
-			.integer({ mode: "timestamp" })
-			.notNull()
-			.default(sql`(unixepoch())`),
-		rowUpdatedAt: t
-			.integer({ mode: "timestamp" })
-			.notNull()
-			.default(sql`(unixepoch())`),
+		...rowTimestampColumns(t),
 	}),
-	(t) => ({
-		pk: primaryKey({ columns: [t.keywordId, t.paperId] }),
-	}),
+	(t) => [primaryKey({ columns: [t.keywordId, t.paperId] })],
 );
 
 export type AuthorsTable = typeof authors;
@@ -146,53 +102,9 @@ export type PapersTable = typeof papers;
 export type KeywordsTable = typeof keywords;
 export type AuthorsToPapersTable = typeof authorsToPapers;
 export type KeywordsToPapersTable = typeof keywordsToPapers;
-
 export type DataTimeTable = AuthorsTable | PapersTable;
-
 export type DatabaseTable =
 	| DataTimeTable
 	| KeywordsTable
 	| AuthorsToPapersTable
 	| KeywordsToPapersTable;
-
-export const authorsRelations = relations(authors, ({ one, many }) => ({
-	authorsToPapers: many(authorsToPapers),
-}));
-
-export const papersRelations = relations(papers, ({ many }) => ({
-	authorsToPapers: many(authorsToPapers),
-	keywordsToPapers: many(keywordsToPapers),
-}));
-
-export const keywordsRelations = relations(keywords, ({ many }) => ({
-	keywordsToPapers: many(keywordsToPapers),
-}));
-
-export const authorsToPapersRelations = relations(
-	authorsToPapers,
-	({ one }) => ({
-		author: one(authors, {
-			fields: [authorsToPapers.authorId],
-			references: [authors.authorId],
-		}),
-
-		paper: one(papers, {
-			fields: [authorsToPapers.paperId],
-			references: [papers.paperId],
-		}),
-	}),
-);
-
-export const keywordsToPapersRelations = relations(
-	keywordsToPapers,
-	({ one }) => ({
-		keyword: one(keywords, {
-			fields: [keywordsToPapers.keywordId],
-			references: [keywords.keywordId],
-		}),
-		paper: one(papers, {
-			fields: [keywordsToPapers.paperId],
-			references: [papers.paperId],
-		}),
-	}),
-);

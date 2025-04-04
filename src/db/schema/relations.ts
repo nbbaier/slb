@@ -1,26 +1,11 @@
 import { relations } from "drizzle-orm";
-import { sqliteTable } from "drizzle-orm/sqlite-core";
-
-export const authors = sqliteTable("authors", (t) => ({
-	authorId: t.integer().primaryKey(),
-	firstName: t.text(),
-	lastName: t.text(),
-}));
-
-export const papers = sqliteTable("papers", (t) => ({
-	paperId: t.integer().primaryKey(),
-}));
-
-export const authorsToPapers = sqliteTable("authors_to_papers", (t) => ({
-	authorId: t
-		.integer()
-		.notNull()
-		.references(() => authors.authorId),
-	paperId: t
-		.integer()
-		.notNull()
-		.references(() => papers.paperId),
-}));
+import {
+	authors,
+	authorsToPapers,
+	papers,
+	keywordsToPapers,
+	keywords,
+} from ".";
 
 export const authorsRelations = relations(authors, ({ one, many }) => ({
 	authorsToPapers: many(authorsToPapers),
@@ -28,6 +13,11 @@ export const authorsRelations = relations(authors, ({ one, many }) => ({
 
 export const papersRelations = relations(papers, ({ many }) => ({
 	authorsToPapers: many(authorsToPapers),
+	keywordsToPapers: many(keywordsToPapers),
+}));
+
+export const keywordsRelations = relations(keywords, ({ many }) => ({
+	keywordsToPapers: many(keywordsToPapers),
 }));
 
 export const authorsToPapersRelations = relations(
@@ -40,6 +30,20 @@ export const authorsToPapersRelations = relations(
 
 		paper: one(papers, {
 			fields: [authorsToPapers.paperId],
+			references: [papers.paperId],
+		}),
+	}),
+);
+
+export const keywordsToPapersRelations = relations(
+	keywordsToPapers,
+	({ one }) => ({
+		keyword: one(keywords, {
+			fields: [keywordsToPapers.keywordId],
+			references: [keywords.keywordId],
+		}),
+		paper: one(papers, {
+			fields: [keywordsToPapers.paperId],
 			references: [papers.paperId],
 		}),
 	}),

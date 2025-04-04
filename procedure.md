@@ -1,24 +1,23 @@
 # Initial scraping process
 
-- Generate a list of pages to visit
-- For each page
-  - Visit the page, get html
-  - Extract the rows
-    - For each row
-      - Get the paper metadata
-      - Visit the paper's page
-        - get the html for the page
-        - get the data on that page
-      - Visit each author's page
-        - get the author's metadata
-      - Write collected data to db
-
+-  Generate a list of pages to visit
+-  For each page
+   -  Visit the page, get html
+   -  Extract the rows
+      -  For each row
+         -  Get the paper metadata
+         -  Visit the paper's page
+            -  get the html for the page
+            -  get the data on that page
+         -  Visit each author's page
+            -  get the author's metadata
+         -  Write collected data to db
 
 # Runs after the initial scraping run
 
-- Generate list of ids to visit
-- Use that number in a call to `generateUrls()`
-- Do the above process for each url
+-  Generate list of ids to visit
+-  Use that number in a call to `generateUrls()`
+-  Do the above process for each url
 
 # How many fetches am I making per page
 

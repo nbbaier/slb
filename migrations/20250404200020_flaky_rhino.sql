@@ -8,8 +8,8 @@ CREATE TABLE `authors` (
 	`affiliation` text,
 	`data_created_at` integer NOT NULL,
 	`data_updated_at` integer NOT NULL,
-	`row_created_at` integer DEFAULT (unixepoch()) NOT NULL,
-	`row_updated_at` integer DEFAULT (unixepoch()) NOT NULL
+	`row_created_at` integer,
+	`row_updated_at` integer
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `authors_username_unique` ON `authors` (`username`);--> statement-breakpoint
@@ -19,8 +19,8 @@ CREATE TABLE `authors_to_papers` (
 	`author_id` integer NOT NULL,
 	`paper_id` integer NOT NULL,
 	`author_position` integer NOT NULL,
-	`row_created_at` integer DEFAULT (unixepoch()) NOT NULL,
-	`row_updated_at` integer DEFAULT (unixepoch()) NOT NULL,
+	`row_created_at` integer,
+	`row_updated_at` integer,
 	PRIMARY KEY(`author_id`, `paper_id`),
 	FOREIGN KEY (`author_id`) REFERENCES `authors`(`author_id`) ON UPDATE cascade ON DELETE cascade,
 	FOREIGN KEY (`paper_id`) REFERENCES `papers`(`paper_id`) ON UPDATE cascade ON DELETE cascade
@@ -29,16 +29,16 @@ CREATE TABLE `authors_to_papers` (
 CREATE TABLE `keywords` (
 	`keyword_id` integer PRIMARY KEY NOT NULL,
 	`keyword` text NOT NULL,
-	`row_created_at` integer DEFAULT (unixepoch()) NOT NULL,
-	`row_updated_at` integer DEFAULT (unixepoch()) NOT NULL
+	`row_created_at` integer,
+	`row_updated_at` integer
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `keywords_keyword_unique` ON `keywords` (`keyword`);--> statement-breakpoint
 CREATE TABLE `keywords_to_papers` (
 	`keyword_id` integer NOT NULL,
 	`paper_id` integer NOT NULL,
-	`row_created_at` integer DEFAULT (unixepoch()) NOT NULL,
-	`row_updated_at` integer DEFAULT (unixepoch()) NOT NULL,
+	`row_created_at` integer,
+	`row_updated_at` integer,
 	PRIMARY KEY(`keyword_id`, `paper_id`),
 	FOREIGN KEY (`keyword_id`) REFERENCES `keywords`(`keyword_id`) ON UPDATE cascade ON DELETE cascade,
 	FOREIGN KEY (`paper_id`) REFERENCES `papers`(`paper_id`) ON UPDATE cascade ON DELETE cascade
@@ -59,8 +59,8 @@ CREATE TABLE `papers` (
 	`paper_url` text,
 	`data_created_at` integer NOT NULL,
 	`data_updated_at` integer NOT NULL,
-	`row_created_at` integer DEFAULT (unixepoch()) NOT NULL,
-	`row_updated_at` integer DEFAULT (unixepoch()) NOT NULL
+	`row_created_at` integer,
+	`row_updated_at` integer
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `papers_lingbuzzId_unique` ON `papers` (`lingbuzz_id`);--> statement-breakpoint
