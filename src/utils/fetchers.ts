@@ -44,6 +44,7 @@ export async function fetchAuthorData(authorUrl: string): Promise<{
 export async function fetchPaperData(
 	paperURL: string,
 	id: string,
+	logging = false,
 ): Promise<{
 	paperPageHTML: string;
 	date: string;
@@ -54,12 +55,12 @@ export async function fetchPaperData(
 	downloads: number;
 	previousVersions: PreviousVersion[];
 } | null> {
-	console.log(`Getting paper ${id}`);
+	logging && console.log(`Getting paper ${id}`);
 	const paperPageHTML = await fetchHtml(paperURL);
 	const document = new JSDOM(paperPageHTML).window.document;
 
 	if (!isPaperFound(document)) {
-		console.log(`No paper found for ${id}`);
+		logging && console.log(`No paper found for ${id}`);
 		return null;
 	}
 

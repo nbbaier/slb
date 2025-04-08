@@ -11,8 +11,8 @@ export function stripParams(url: string): string {
 	return strippedURL.toString();
 }
 
-export async function getPaperCount(BASE_URL: string): Promise<number> {
-	const html = await fetchHtml(BASE_URL);
+export async function getPaperCount(url = BASE_URL): Promise<number> {
+	const html = await fetchHtml(url);
 	const document = new JSDOM(html).window.document;
 
 	const paperCountElement = document.body.querySelector("center > b > a");
@@ -66,7 +66,7 @@ export async function generateUrls(
 }
 
 export async function getPageRows(url: string): Promise<HTMLTableRowElement[]> {
-	const html = await fetchHtml(BASE_URL);
+	const html = await fetchHtml(url);
 	const document = new JSDOM(html).window.document;
 
 	const mainTable = document.body

@@ -11,10 +11,12 @@ async function main() {
 	console.log(`URLs to scrape = ${urlsToScrape.length}`);
 
 	for (const url of urlsToScrape) {
-		console.log(`Scraping ${url}`);
-
+		const startTime = performance.now();
 		const rows = await getPageRows(url);
 		const chunkedRows = chunkArray(rows, 10);
+		let processedRows = 0;
+
+		console.log(`Starting to scrape ${url}`);
 
 		for (const chunk of chunkedRows) {
 			await Promise.all(
@@ -27,10 +29,7 @@ async function main() {
 							for (const author of Object.values(authors)) {
 								const authorFolderPath = `./scraped_data/authors/${author.username}`;
 
-								if (await exists(authorFolderPath)) {
-									// console.log(`Skipping ${author.username}`);
-									continue;
-								}
+								if (await exists(authorFolderPath)) continue;
 
 								const { authorUrl } = author;
 								const { authorPageHTML, email, affiliation, website } =
@@ -54,15 +53,12 @@ async function main() {
 							}
 
 							const { id, title, paperURL, downloadURL } = rowData;
-							const paperFolderPath = `./scraped_data/papers/${rowData.id}`;
+							const paperFolderPath = `./scraped_data/papers/${id}`;
 
-							if (await exists(paperFolderPath)) {
-								// console.log(`Skipping paper ${id}`);
-								return;
-							}
+							if (await exists(paperFolderPath)) return;
 
 							try {
-								const paperResult = await fetchPaperData(paperURL, id);
+								const paperResult = await fetchPaperData(paperURL, id, true);
 
 								if (paperResult === null) {
 									console.log(`No paper data found for ${id}`);
@@ -106,12 +102,24 @@ async function main() {
 						} else {
 							console.log("No row data extracted");
 						}
+						processedRows++;
 					} catch (error) {
 						console.log(`Error processing row: ${error}`);
 					}
 				}),
 			);
 		}
+
+		const endTime = performance.now();
+		const totalTime = endTime - startTime;
+		const timePerRowMsg =
+			processedRows > 0
+				? `(${(totalTime / processedRows).toFixed(2)}ms per row)`
+				: "";
+
+		console.log(
+			`Processed ${processedRows} rows in ${totalTime.toFixed(2)}ms ${timePerRowMsg}`,
+		);
 	}
 }
 

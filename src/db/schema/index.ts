@@ -1,4 +1,3 @@
-import { relations } from "drizzle-orm";
 import { index, primaryKey, sqliteTable } from "drizzle-orm/sqlite-core";
 import { recordTimestampColumns, rowTimestampColumns } from "./sharedCols";
 
