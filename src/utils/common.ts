@@ -65,8 +65,11 @@ export async function generateUrls(
 	return urls;
 }
 
-export async function getPageRows(url: string): Promise<HTMLTableRowElement[]> {
+export async function getPageRows(
+	url: string,
+): Promise<{ rows: HTMLTableRowElement[]; totalRows: number }> {
 	const html = await fetchHtml(url);
+	console.log(`Fetched HTML from ${url}, length: ${html.length}`);
 	const document = new JSDOM(html).window.document;
 
 	const mainTable = document.body
@@ -75,6 +78,10 @@ export async function getPageRows(url: string): Promise<HTMLTableRowElement[]> {
 
 	if (!mainTable) {
 		console.error("Main table not found");
+		console.error(
+			"Available tables:",
+			document.body.querySelectorAll("table").length,
+		);
 		process.exit(1);
 	}
 
@@ -85,8 +92,9 @@ export async function getPageRows(url: string): Promise<HTMLTableRowElement[]> {
 		process.exit(1);
 	}
 
-	return Array.from(rows);
+	return { rows: Array.from(rows), totalRows: rows.length };
 }
+
 export function chunkArray<T>(array: T[], chunkSize: number): T[][] {
 	const results = [];
 	while (array.length) {
