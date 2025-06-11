@@ -1,11 +1,12 @@
 import { drizzle } from "drizzle-orm/libsql";
-import { DB_PATH } from "../config";
 import * as schema from "./schema";
+import * as relations from "./schema/relations";
 
 export default drizzle({
-	connection: {
-		url: `file:${DB_PATH}`,
-	},
-	casing: "snake_case",
-	schema,
+  connection: {
+    url: process.env.TURSO_DATABASE_URL as string,
+    authToken: process.env.TURSO_AUTH_TOKEN as string,
+  },
+  casing: "snake_case",
+  schema: { ...schema, ...relations },
 });
