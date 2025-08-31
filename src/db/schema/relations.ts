@@ -2,9 +2,9 @@ import { relations } from "drizzle-orm";
 import {
   authors,
   authorsToPapers,
-  papers,
-  keywordsToPapers,
   keywords,
+  keywordsToPapers,
+  papers,
 } from ".";
 
 export const authorsRelations = relations(authors, ({ many }) => ({

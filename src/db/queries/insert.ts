@@ -4,10 +4,10 @@ import db from "..";
 import {
   authors,
   authorsToPapers,
-  keywordsToPapers,
-  keywords,
-  papers,
   type DatabaseTable,
+  keywords,
+  keywordsToPapers,
+  papers,
 } from "../schema/";
 
 type Paper = typeof papers.$inferSelect;
