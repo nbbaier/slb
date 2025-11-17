@@ -1,5 +1,5 @@
 import { mkdir, writeFile } from "node:fs/promises";
-import type { ExtendedAuthor, ExtendedPaper } from "../types";
+import type { BasePaper, ExtendedAuthor, ExtendedPaper } from "../types";
 
 async function writeToFile(file: string, data: string) {
   if (process.versions.bun) {
@@ -27,8 +27,10 @@ export async function writePaperData(
   rowHTML: string,
   paperPageHTML: string,
   paperData: ExtendedPaper,
+  rowData: BasePaper,
 ) {
   await mkdir(paperFolderPath, { recursive: true });
+  await writeToFile(`${paperFolderPath}/row.json`, JSON.stringify(rowData));
   await writeToFile(`${paperFolderPath}/row.html`, `<tr>${rowHTML}</tr>`);
   await writeToFile(`${paperFolderPath}/index.html`, paperPageHTML);
   await writeToFile(
@@ -39,4 +41,9 @@ export async function writePaperData(
       data: paperData,
     }),
   );
+}
+
+export async function writePageData(pageFolderPath: string, pageHTML: string) {
+  await mkdir(pageFolderPath, { recursive: true });
+  await writeToFile(`${pageFolderPath}/index.html`, pageHTML);
 }

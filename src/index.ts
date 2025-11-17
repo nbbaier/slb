@@ -22,134 +22,134 @@ async function main() {
     { flag: "a" },
   );
 
-  for (const url of urlsToScrape) {
+  for (const [index, url] of urlsToScrape.entries()) {
     const startTime = performance.now();
-    const { rows, totalRows } = await getPageRows(url);
+    const { rows, totalRows } = await getPageRows(url, index + 1);
     const chunkedRows = chunkArray(rows, 10);
     let processedRows = 0;
 
-    console.log(`Starting to scrape ${url} (${totalRows} rows)`);
-    await writeFile(logFile, `\nProcessing ${url} (${totalRows} rows)\n`, {
+    console.log(`\nStarting to scrape ${url} (${totalRows} rows)\n`);
+    await writeFile(logFile, `Processing ${url} (${totalRows} rows)\n`, {
       flag: "a",
     });
 
     for (const chunk of chunkedRows) {
-      await Promise.all(
-        chunk.map(async (row: HTMLTableRowElement) => {
-          const rowStartTime = performance.now();
-          try {
-            const rowHTML = row.innerHTML;
-            const rowData = extractDataFromRow(row);
-            if (rowData !== null) {
-              const { authors } = rowData;
-              for (const author of Object.values(authors)) {
-                const authorFolderPath = `./scraped_data/authors/${author.username}`;
+      const chunkPromises = chunk.map(async (row: HTMLTableRowElement) => {
+        const rowStartTime = performance.now();
+        try {
+          const rowHTML = row.innerHTML;
+          const rowData = extractDataFromRow(row);
+          if (rowData !== null) {
+            const { authors } = rowData;
+            for (const author of Object.values(authors)) {
+              const authorFolderPath = `./scraped_data/authors/${author.username}`;
 
-                if (await exists(authorFolderPath)) continue;
+              if (await exists(authorFolderPath)) continue;
 
-                const { authorUrl } = author;
-                const { authorPageHTML, email, affiliation, website } =
-                  await fetchAuthorData(authorUrl);
+              const { authorUrl } = author;
+              const { authorPageHTML, email, affiliation, website } =
+                await fetchAuthorData(authorUrl);
 
-                const authorData: ExtendedAuthor = {
-                  firstName: author.firstName,
-                  lastName: author.lastName,
-                  username: author.username,
-                  authorUrl,
-                  email,
-                  affiliation,
-                  website,
-                };
+              const authorData: ExtendedAuthor = {
+                firstName: author.firstName,
+                lastName: author.lastName,
+                username: author.username,
+                authorUrl,
+                email,
+                affiliation,
+                website,
+              };
 
-                await writeAuthorData(
-                  authorFolderPath,
-                  authorData,
-                  authorPageHTML,
-                );
-              }
+              await writeAuthorData(
+                authorFolderPath,
+                authorData,
+                authorPageHTML,
+              );
+            }
 
-              const { id, title, paperURL, downloadURL } = rowData;
-              const paperFolderPath = `./scraped_data/papers/${id}`;
+            const { id, title, paperURL, downloadURL } = rowData;
+            const paperFolderPath = `./scraped_data/papers/${id}`;
 
-              if (await exists(paperFolderPath)) {
+            if (await exists(paperFolderPath)) {
+              const rowEndTime = performance.now();
+              const rowTime = rowEndTime - rowStartTime;
+              const logMessage = `[${new Date().toISOString()}] Row ${processedRows + 1}/${totalRows}: Skipped paper ${id} (${rowTime.toFixed(2)}ms)\n`;
+              await writeFile(logFile, logMessage, { flag: "a" });
+              return;
+            }
+
+            try {
+              const paperResult = await fetchPaperData(paperURL, id);
+
+              if (paperResult === null) {
                 const rowEndTime = performance.now();
                 const rowTime = rowEndTime - rowStartTime;
-                const logMessage = `[${new Date().toISOString()}] Row ${processedRows + 1}/${totalRows}: Skipped paper ${id} (${rowTime.toFixed(2)}ms)\n`;
+                const logMessage = `[${new Date().toISOString()}] Row ${processedRows + 1}/${totalRows}: No paper data found for ${id} (${rowTime.toFixed(2)}ms)\n`;
                 await writeFile(logFile, logMessage, { flag: "a" });
                 return;
               }
 
-              try {
-                const paperResult = await fetchPaperData(paperURL, id);
+              const {
+                paperPageHTML,
+                date,
+                publishedIn,
+                keywords,
+                keywordsRaw,
+                abstract,
+                downloads,
+              } = paperResult;
 
-                if (paperResult === null) {
-                  const rowEndTime = performance.now();
-                  const rowTime = rowEndTime - rowStartTime;
-                  const logMessage = `[${new Date().toISOString()}] Row ${processedRows + 1}/${totalRows}: No paper data found for ${id} (${rowTime.toFixed(2)}ms)\n`;
-                  await writeFile(logFile, logMessage, { flag: "a" });
-                  return;
-                }
+              const paperData: ExtendedPaper = {
+                id,
+                title,
+                authors,
+                date,
+                publishedIn,
+                keywords,
+                keywordsRaw,
+                abstract,
+                downloads,
+                downloadURL,
+                paperURL,
+                previousVersions: [],
+              };
 
-                const {
-                  paperPageHTML,
-                  date,
-                  publishedIn,
-                  keywords,
-                  keywordsRaw,
-                  abstract,
-                  downloads,
-                } = paperResult;
+              await writePaperData(
+                paperFolderPath,
+                rowHTML,
+                paperPageHTML,
+                paperData,
+                rowData,
+              );
 
-                const paperData: ExtendedPaper = {
-                  id,
-                  title,
-                  authors,
-                  date,
-                  publishedIn,
-                  keywords,
-                  keywordsRaw,
-                  abstract,
-                  downloads,
-                  downloadURL,
-                  paperURL,
-                  previousVersions: [],
-                };
-
-                await writePaperData(
-                  paperFolderPath,
-                  rowHTML,
-                  paperPageHTML,
-                  paperData,
-                );
-
-                const rowEndTime = performance.now();
-                const rowTime = rowEndTime - rowStartTime;
-                const logMessage = `[${new Date().toISOString()}] Row ${processedRows + 1}/${totalRows}: Processed paper ${id} (${rowTime.toFixed(2)}ms)\n`;
-                await writeFile(logFile, logMessage, { flag: "a" });
-              } catch (error) {
-                const rowEndTime = performance.now();
-                const rowTime = rowEndTime - rowStartTime;
-                const logMessage = `[${new Date().toISOString()}] Row ${processedRows + 1}/${totalRows}: Error processing paper ${id}: ${error} (${rowTime.toFixed(2)}ms)\n`;
-                await writeFile(logFile, logMessage, { flag: "a" });
-                console.log(`Error fetching paper data for ${id}: ${error}`);
-              }
-            } else {
               const rowEndTime = performance.now();
               const rowTime = rowEndTime - rowStartTime;
-              const logMessage = `[${new Date().toISOString()}] Row ${processedRows + 1}/${totalRows}: No row data extracted (${rowTime.toFixed(2)}ms)\n`;
+              const logMessage = `[${new Date().toISOString()}] Row ${processedRows + 1}/${totalRows}: Processed paper ${id} (${rowTime.toFixed(2)}ms)\n`;
               await writeFile(logFile, logMessage, { flag: "a" });
-              console.log("No row data extracted");
+            } catch (error) {
+              const rowEndTime = performance.now();
+              const rowTime = rowEndTime - rowStartTime;
+              const logMessage = `[${new Date().toISOString()}] Row ${processedRows + 1}/${totalRows}: Error processing paper ${id}: ${error} (${rowTime.toFixed(2)}ms)\n`;
+              await writeFile(logFile, logMessage, { flag: "a" });
+              console.log(`Error fetching paper data for ${id}: ${error}`);
             }
-            processedRows++;
-          } catch (error) {
+          } else {
             const rowEndTime = performance.now();
             const rowTime = rowEndTime - rowStartTime;
-            const logMessage = `[${new Date().toISOString()}] Row ${processedRows + 1}/${totalRows}: Error processing row: ${error} (${rowTime.toFixed(2)}ms)\n`;
+            const logMessage = `[${new Date().toISOString()}] Row ${processedRows + 1}/${totalRows}: No row data extracted (${rowTime.toFixed(2)}ms)\n`;
             await writeFile(logFile, logMessage, { flag: "a" });
-            console.log(`Error processing row: ${error}`);
+            console.log("No row data extracted");
           }
-        }),
-      );
+        } catch (error) {
+          const rowEndTime = performance.now();
+          const rowTime = rowEndTime - rowStartTime;
+          const logMessage = `[${new Date().toISOString()}] Row ${processedRows + 1}/${totalRows}: Error processing row: ${error} (${rowTime.toFixed(2)}ms)\n`;
+          await writeFile(logFile, logMessage, { flag: "a" });
+          console.log(`Error processing row: ${error}`);
+        }
+      });
+      await Promise.all(chunkPromises);
+      processedRows += chunk.length;
     }
 
     const endTime = performance.now();

@@ -7,16 +7,11 @@ export function removeTimeColumns<T extends DatabaseTable>(table: T) {
     Object.entries(columns).filter(([key]) => !isTimeColumn(key)),
   ) as Omit<
     typeof columns,
-    "rowCreatedAt" | "rowUpdatedAt" | "dataCreatedAt" | "dataUpdatedAt"
+    "" | "rowUpdatedAt" | "dataCreatedAt" | "dataUpdatedAt"
   >;
 }
 
 function isTimeColumn(key: string): boolean {
-  const timeColumns = [
-    "rowCreatedAt",
-    "rowUpdatedAt",
-    "dataCreatedAt",
-    "dataUpdatedAt",
-  ];
+  const timeColumns = ["", "rowUpdatedAt", "dataCreatedAt", "dataUpdatedAt"];
   return timeColumns.includes(key);
 }

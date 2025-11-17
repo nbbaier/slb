@@ -4,6 +4,7 @@ import { join } from "node:path/posix";
 import { JSDOM } from "jsdom";
 import { BASE_URL } from "../config";
 import { fetchHtml } from "./fetchers";
+import { writePageData } from "./writers";
 
 export function stripParams(url: string): string {
   const strippedURL = new URL(url);
@@ -67,8 +68,12 @@ export async function generateUrls(
 
 export async function getPageRows(
   url: string,
+  index: number,
 ): Promise<{ rows: HTMLTableRowElement[]; totalRows: number }> {
   const html = await fetchHtml(url);
+  const pageFolderPath = `./scraped_data/pages/page_${index.toString().padStart(3, "0")}`;
+  writePageData(pageFolderPath, html);
+  console.log("--------------------------------");
   console.log(`Fetched HTML from ${url}, length: ${html.length}`);
   const document = new JSDOM(html).window.document;
 
@@ -130,3 +135,14 @@ export async function getScrapedDirInfo(
 export type Prettify<T> = {
   [k in keyof T]: T[k];
 } & {};
+
+export function omitKeys<T extends object, K extends keyof T>(
+  obj: T,
+  ...keys: K[]
+): Omit<T, K> {
+  const result = { ...obj };
+  keys.forEach((key) => {
+    delete result[key as keyof T];
+  });
+  return result;
+}

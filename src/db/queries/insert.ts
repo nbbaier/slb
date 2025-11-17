@@ -1,5 +1,12 @@
 import type { ResultSet } from "@libsql/client";
-import type { IndexColumn, SQLiteColumn } from "drizzle-orm/sqlite-core";
+import { getTableColumns, type SQL, sql } from "drizzle-orm";
+import type {
+  IndexColumn,
+  SQLiteColumn,
+  SQLiteTable,
+  SQLiteUpdateSetSource,
+} from "drizzle-orm/sqlite-core";
+import { snakeCase } from "text-snake-case";
 import db from "..";
 import {
   authors,
@@ -9,6 +16,24 @@ import {
   keywordsToPapers,
   papers,
 } from "../schema/";
+
+export const buildConflictUpdateColumns = <
+  T extends SQLiteTable,
+  Q extends keyof T["_"]["columns"],
+>(
+  table: T,
+  columns: Q[],
+) => {
+  const cls = getTableColumns(table);
+  return columns.reduce(
+    (acc, column) => {
+      const colName = snakeCase(cls[column].name);
+      acc[column] = sql.raw(`excluded.${colName}`);
+      return acc;
+    },
+    {} as Record<Q, SQL>,
+  );
+};
 
 type Paper = typeof papers.$inferSelect;
 type Author = typeof authors.$inferSelect;
@@ -22,95 +47,113 @@ export type InsertKeyword = typeof keywords.$inferInsert;
 export type InsertAuthorsPaper = typeof authorsToPapers.$inferInsert;
 export type InsertKeywordsPaper = typeof keywordsToPapers.$inferInsert;
 
+export interface InsertOptions<
+  TTable extends DatabaseTable,
+  TReturning = undefined,
+> {
+  returning?: TReturning;
+  onConflictDo?: { target: IndexColumn | IndexColumn[] };
+  onConflictDoUpdate?: {
+    target: IndexColumn | IndexColumn[];
+    targetWhere?: SQL;
+    setWhere?: SQL;
+    set: SQLiteUpdateSetSource<TTable>;
+  };
+}
+
+type InsertIntoTableReturnType<T, TableSelect> = T extends Record<
+  string,
+  SQLiteColumn
+>
+  ? { [K in keyof T & keyof TableSelect]: TableSelect[K] }[]
+  : ResultSet;
+
 async function insertIntoTable<
+  TTable extends DatabaseTable,
   TableSelect,
-  TableInsert extends {
-    rowCreatedAt?: Date | null;
-    rowUpdatedAt?: Date | null;
-  },
+  TableInsert extends TTable["$inferInsert"],
   T extends
     | Partial<Record<keyof TableSelect, SQLiteColumn>>
     | undefined = undefined,
 >(
-  table: DatabaseTable,
+  table: TTable,
   data: TableInsert,
   {
     returning,
     onConflictDo,
-  }: {
-    returning?: NonNullable<T>;
-    onConflictDo?: { target: IndexColumn | IndexColumn[] };
-  } = {},
-): Promise<
-  T extends Record<string, SQLiteColumn>
-    ? { [K in keyof T & keyof TableSelect]: TableSelect[K] }[]
-    : ResultSet
-> {
+    onConflictDoUpdate,
+  }: InsertOptions<TTable, NonNullable<T>> = {},
+): Promise<InsertIntoTableReturnType<T, TableSelect>> {
   if (onConflictDo && returning) {
     throw new Error("Cannot use both returning and onConflictDo");
   }
 
   const coreStatement = db.insert(table).values(data);
+  let result: InsertIntoTableReturnType<T, TableSelect>;
 
   if (onConflictDo) {
-    const result = await coreStatement.onConflictDoNothing(onConflictDo);
-    return result as unknown as T extends Record<string, SQLiteColumn>
-      ? { [K in keyof T & keyof TableSelect]: TableSelect[K] }[]
-      : ResultSet;
-  }
-
-  if (returning) {
+    result = (await coreStatement.onConflictDoNothing(
+      onConflictDo,
+    )) as InsertIntoTableReturnType<T, TableSelect>;
+  } else if (onConflictDoUpdate && returning) {
     const definedColumns = Object.values(returning).filter(
       (col): col is SQLiteColumn => col !== undefined,
     );
-    const result = await coreStatement.returning(
-      Object.fromEntries(definedColumns.map((col) => [col.name, col])),
+    result = (await coreStatement
+      .onConflictDoUpdate(onConflictDoUpdate)
+      .returning(
+        Object.fromEntries(definedColumns.map((col) => [col.name, col])),
+      )) as InsertIntoTableReturnType<T, TableSelect>;
+  } else if (onConflictDoUpdate) {
+    result = (await coreStatement.onConflictDoUpdate(
+      onConflictDoUpdate,
+    )) as InsertIntoTableReturnType<T, TableSelect>;
+  } else if (returning) {
+    const definedColumns = Object.values(returning).filter(
+      (col): col is SQLiteColumn => col !== undefined,
     );
-    return result as unknown as T extends Record<string, SQLiteColumn>
-      ? { [K in keyof T & keyof TableSelect]: TableSelect[K] }[]
-      : ResultSet;
+    result = (await coreStatement.returning(
+      Object.fromEntries(definedColumns.map((col) => [col.name, col])),
+    )) as InsertIntoTableReturnType<T, TableSelect>;
+  } else {
+    result = (await coreStatement) as InsertIntoTableReturnType<T, TableSelect>;
   }
-  return coreStatement as unknown as T extends Record<string, SQLiteColumn>
-    ? { [K in keyof T & keyof TableSelect]: TableSelect[K] }[]
-    : ResultSet;
+  return result;
 }
 
-export function insertPaper<
+export async function insertPaper<
   T extends Partial<Record<keyof Paper, SQLiteColumn>> | undefined = undefined,
 >(
   paper: InsertPaper,
-  options?: {
-    returning?: T;
-    onConflictDo?: { target: IndexColumn | IndexColumn[] };
-  },
-) {
-  return insertIntoTable<Paper, InsertPaper, T>(papers, paper, options);
+  options?: InsertOptions<typeof papers, T>,
+): Promise<InsertIntoTableReturnType<T, Paper>> {
+  return insertIntoTable<typeof papers, Paper, InsertPaper, T>(
+    papers,
+    paper,
+    options,
+  );
 }
 
 export function insertAuthor<
   T extends Partial<Record<keyof Author, SQLiteColumn>> | undefined = undefined,
->(
-  author: InsertAuthor,
-  options?: {
-    returning?: T;
-    onConflictDo?: { target: IndexColumn | IndexColumn[] };
-  },
-) {
-  return insertIntoTable<Author, InsertAuthor, T>(authors, author, options);
+>(author: InsertAuthor, options?: InsertOptions<typeof authors, T>) {
+  return insertIntoTable<typeof authors, Author, InsertAuthor, T>(
+    authors,
+    author,
+    options,
+  );
 }
 
 export function insertKeyword<
   T extends
     | Partial<Record<keyof Keyword, SQLiteColumn>>
     | undefined = undefined,
->(
-  keyword: InsertKeyword,
-  options?: {
-    returning?: T;
-    onConflictDo?: { target: IndexColumn | IndexColumn[] };
-  },
-) {
-  return insertIntoTable<Keyword, InsertKeyword, T>(keywords, keyword, options);
+>(keyword: InsertKeyword, options?: InsertOptions<typeof keywords, T>) {
+  return insertIntoTable<typeof keywords, Keyword, InsertKeyword, T>(
+    keywords,
+    keyword,
+    options,
+  );
 }
 
 export function insertAuthorsPapers<
@@ -119,16 +162,14 @@ export function insertAuthorsPapers<
     | undefined = undefined,
 >(
   authorsPaper: InsertAuthorsPaper,
-  options?: {
-    returning?: T;
-    onConflictDo?: { target: IndexColumn | IndexColumn[] };
-  },
+  options?: InsertOptions<typeof authorsToPapers, T>,
 ) {
-  return insertIntoTable<AuthorPaper, InsertAuthorsPaper, T>(
-    authorsToPapers,
-    authorsPaper,
-    options,
-  );
+  return insertIntoTable<
+    typeof authorsToPapers,
+    AuthorPaper,
+    InsertAuthorsPaper,
+    T
+  >(authorsToPapers, authorsPaper, options);
 }
 
 export function insertKeywordsPapers<
@@ -137,14 +178,12 @@ export function insertKeywordsPapers<
     | undefined = undefined,
 >(
   keywordsPaper: InsertKeywordsPaper,
-  options?: {
-    returning?: T;
-    onConflictDo?: { target: IndexColumn | IndexColumn[] };
-  },
+  options?: InsertOptions<typeof keywordsToPapers, T>,
 ) {
-  return insertIntoTable<KeywordPaper, InsertKeywordsPaper, T>(
-    keywordsToPapers,
-    keywordsPaper,
-    options,
-  );
+  return insertIntoTable<
+    typeof keywordsToPapers,
+    KeywordPaper,
+    InsertKeywordsPaper,
+    T
+  >(keywordsToPapers, keywordsPaper, options);
 }

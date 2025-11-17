@@ -1,5 +1,7 @@
+import { ne, or, sql } from "drizzle-orm";
 import { index, primaryKey, sqliteTable } from "drizzle-orm/sqlite-core";
-import { recordTimestampColumns, rowTimestampColumns } from "./sharedCols";
+import { Trigger } from "../trigger";
+import { rowTimestampColumns } from "./sharedCols";
 
 export const authors = sqliteTable(
   "authors",
@@ -11,7 +13,7 @@ export const authors = sqliteTable(
     email: t.text().notNull(),
     website: t.text(),
     affiliation: t.text(),
-    ...recordTimestampColumns(t),
+    //  ...recordTimestampColumns(t),
     ...rowTimestampColumns(t),
   }),
   (t) => [
@@ -19,6 +21,26 @@ export const authors = sqliteTable(
     index("authors_email").on(t.email),
   ],
 );
+
+export const updateAuthorsTimestampTrigger = new Trigger({
+  name: "update_authors_timestamp",
+  type: "UPDATE",
+  timing: "AFTER",
+  on: authors,
+  do: (row) =>
+    sql`UPDATE authors SET rows_updated_at = CURRENT_TIMESTAMP WHERE authorId = ${row.newRow.authorId}`,
+  when: ({ newRow, oldRow }) => {
+    const conditions = [
+      ne(oldRow.firstName, newRow.firstName),
+      ne(oldRow.lastName, newRow.lastName),
+      ne(oldRow.username, newRow.username),
+      ne(oldRow.email, newRow.email),
+      ne(oldRow.website, newRow.website),
+      ne(oldRow.affiliation, newRow.affiliation),
+    ];
+    return or(...conditions) ?? sql`1=1`;
+  },
+});
 
 export const papers = sqliteTable(
   "papers",
@@ -35,7 +57,7 @@ export const papers = sqliteTable(
     downloads: t.integer(),
     downloadUrl: t.text(),
     paperUrl: t.text(),
-    ...recordTimestampColumns(t),
+    //  ...recordTimestampColumns(t),
     ...rowTimestampColumns(t),
   }),
   (t) => [

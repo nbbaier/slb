@@ -73,6 +73,7 @@ export async function fetchPaperData(
   const downloads = tableRows.get("downloaded")?.textContent
     ? Number.parseInt(
         tableRows.get("downloaded")?.textContent?.split(" ")[0] as string,
+        10,
       )
     : 0;
 
@@ -133,7 +134,7 @@ export async function getFrontPageIds(): Promise<number[]> {
       const match = regex.exec(href);
       return match ? match[1] : ""; // return the first capturing group (the 6-digit number)
     })
-    .map((id) => Number.parseInt(id))
+    .map((id) => Number.parseInt(id, 10))
     .filter((v, i, a) => a.indexOf(v) === i); // remove duplicates
 
   return hrefs;

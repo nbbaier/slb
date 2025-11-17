@@ -1,8 +1,7 @@
 import { JSDOM } from "jsdom";
 import { BASE_URL } from "../config";
-import type { BasePaper, BaseAuthor } from "../types";
+import type { BaseAuthor, BasePaper } from "../types";
 import { stripParams } from "./common";
-stripParams;
 
 export const extractDataFromRow = (
   row: HTMLTableRowElement,
@@ -12,7 +11,8 @@ export const extractDataFromRow = (
     return null;
   }
 
-  const [authorCell, _, fileCell, titleCell] = cells;
+  const [authorCell, statusCell, fileCell, titleCell] = cells;
+  const status = statusCell.textContent?.trim() || "";
   const authorsArray = Array.from(authorCell.querySelectorAll("a")).entries();
   const authors: BaseAuthor[] = [];
   const authorsMap = new Map<number, BaseAuthor>();
@@ -42,6 +42,7 @@ export const extractDataFromRow = (
   return {
     id,
     authors: Object.fromEntries(authorsMap),
+    status,
     downloadURL,
     paperURL,
     title,

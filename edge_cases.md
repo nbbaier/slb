@@ -5,12 +5,3 @@
 003879 has two of the same username
 003432 has two of the same username
 004566 has two of the same username
-006306 has two of the same username
-004459 has two of the same username
-007869 has two of the same username
-005036 has two of the same username
-003879 has two of the same username
-003432 has two of the same username
-004566 has two of the same username
-006306 has two of the same username
-004459 has two of the same username

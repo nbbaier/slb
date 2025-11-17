@@ -8,5 +8,5 @@ export default drizzle({
     authToken: process.env.TURSO_AUTH_TOKEN as string,
   },
   casing: "snake_case",
-  schema: { ...schema, ...relations },
+     schema: { ...schema, ...relations },
 });

@@ -1,7 +1,7 @@
 import { appendFile } from "node:fs/promises";
-import db from "..";
 import type { ScrapedPaperData } from "../../types";
 import { getScrapedDirInfo, getScrapedDirsContents } from "../../utils/common";
+import db from "..";
 import {
   type InsertAuthorsPaper,
   type InsertKeywordsPaper,
@@ -62,8 +62,6 @@ async function main() {
       paperMonth: data.date.split(" ")[0],
       publishedIn: data.publishedIn,
       keywordsRaw: data.keywordsRaw,
-      dataCreatedAt: new Date(created),
-      dataUpdatedAt: new Date(updated),
       paperReference: `lingbuzz/${data.id}`,
       abstract: data.abstract,
       downloads: data.downloads,
@@ -127,7 +125,7 @@ async function main() {
       authorPaperMappings.push({
         authorId: authorMedatadata.authorId,
         paperId: paperInsertResult[0].paperId,
-        authorPosition: Number.parseInt(authorPosition),
+        authorPosition: Number.parseInt(authorPosition, 10),
       });
     }
 

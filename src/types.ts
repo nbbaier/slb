@@ -14,6 +14,7 @@ export interface ExtendedAuthor extends BaseAuthor {
 export interface BasePaper {
   id: string;
   title: string;
+  status?: string;
   authors: Record<number, BaseAuthor>;
   downloadURL: string;
   paperURL: string;

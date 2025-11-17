@@ -1,6 +1,10 @@
 import type { ScrapedAuthorData } from "../../types";
 import { getScrapedDirInfo, getScrapedDirsContents } from "../../utils/common";
-import { type InsertAuthor, insertAuthor } from "../queries/insert";
+import {
+  buildConflictUpdateColumns,
+  type InsertAuthor,
+  insertAuthor,
+} from "../queries/insert";
 import { authors } from "../schema";
 
 async function main() {
@@ -12,24 +16,26 @@ async function main() {
   for (const dir of dirs) {
     const { id, dataFilePath } = dir;
 
-    const { created, data } = (await Bun.file(
-      dataFilePath,
-    ).json()) as ScrapedAuthorData;
+    const { data } = (await Bun.file(dataFilePath).json()) as ScrapedAuthorData;
 
     const newAuthor: InsertAuthor = {
       username: data.username,
       email: data.email,
-      dataCreatedAt: new Date(created),
-      dataUpdatedAt: new Date(created),
       firstName: data.firstName,
       lastName: data.lastName,
       affiliation: data.affiliation,
       website: data.website,
     };
 
-    const res = await insertAuthor(newAuthor, {
+    const query = insertAuthor(newAuthor, {
       returning: { authorId: authors.authorId, username: authors.username },
+      onConflictDoUpdate: {
+        target: [authors.username],
+        set: buildConflictUpdateColumns(authors, ["rowCreatedAt"]),
+      },
     });
+
+    const res = await query;
 
     if (res.length === 0) {
       console.log(`${id} already exists`);
