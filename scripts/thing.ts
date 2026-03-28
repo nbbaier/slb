@@ -1,4 +1,8 @@
-import { upsertPaper } from "../src/db/queries/insert";
+import {
+  buildConflictUpdateColumns,
+  insertPaper,
+} from "../src/db/queries/insert";
+import { papers } from "../src/db/schema";
 
 const paper = {
   lingbuzzId: "1234567890",
@@ -14,5 +18,11 @@ const paper = {
   paperUrl: "https://test.com",
 };
 
-const result = await upsertPaper(paper);
-console.log(result.sql);
+const result = await insertPaper(paper, {
+  returning: { paperId: papers.paperId, lingbuzzId: papers.lingbuzzId },
+  onConflictDoUpdate: {
+    target: [papers.lingbuzzId],
+    set: buildConflictUpdateColumns(papers, ["rowCreatedAt"]),
+  },
+});
+console.log(result);
